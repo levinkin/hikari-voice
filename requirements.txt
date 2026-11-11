@@ -1,5 +1,8 @@
-mlx==0.32.4
-mlx-audio==0.6.4
+mlx==0.32.4 ; sys_platform == "darwin" and platform_machine == "arm64"
+mlx-audio==0.6.4 ; sys_platform == "darwin" and platform_machine == "arm64"
+faster-qwen3-tts==0.5.4 ; sys_platform != "darwin" or platform_machine != "arm64"
+torch==2.15.0 ; sys_platform != "darwin" or platform_machine != "arm64"
+transformers==5.15.1 ; sys_platform != "darwin" or platform_machine != "arm64"
 numpy==2.5.4
 fastapi==0.162.0
 uvicorn==0.54.0
