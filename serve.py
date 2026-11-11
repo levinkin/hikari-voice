@@ -1,4 +1,5 @@
 import queue
+import re
 import threading
 from pathlib import Path
 
@@ -61,7 +62,8 @@ async def stream(chunks: queue.Queue, stop: threading.Event):
 async def speech(request: SpeechRequest):
     chunks = queue.Queue()
     stop = threading.Event()
-    threading.Thread(target=synthesize, args=(request.input, chunks, stop), daemon=True).start()
+    text = re.sub(r"\bnya+\b", "Nyah", request.input, flags=re.IGNORECASE) + " ^."
+    threading.Thread(target=synthesize, args=(text, chunks, stop), daemon=True).start()
     return StreamingResponse(stream(chunks, stop), media_type="audio/pcm")
 
 
