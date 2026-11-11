@@ -65,7 +65,8 @@ async def stream(chunks: queue.Queue, stop: threading.Event):
 async def speech(request: SpeechRequest):
     chunks = queue.Queue()
     stop = threading.Event()
-    text = re.sub(r"\bnya+\b", "Nyah", request.input, flags=re.IGNORECASE) + " ^."
+    text = re.sub(r"^\s*nya+\b[,~]?", "N'yah!", request.input, flags=re.IGNORECASE)
+    text = re.sub(r"\bnya+\b", "N'yah", text, flags=re.IGNORECASE) + " ^."
     threading.Thread(target=synthesize, args=(text, request.seed, chunks, stop), daemon=True).start()
     return StreamingResponse(stream(chunks, stop), media_type="audio/pcm")
 
