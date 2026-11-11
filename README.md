@@ -6,12 +6,13 @@ i wrote it because the stock way of running qwen3-tts through mlx-audio used mor
 
 ## what it does differently
 
-on the mac, all of this keeps the audio byte-identical to plain mlx-audio with the same text and seed. i checked english, japanese and german lines before and after, on all three mac models below.
+on the mac, all of this keeps the audio byte-identical to plain mlx-audio with the same text, seed and temperature. i checked english, japanese and german lines before and after, on all three mac models below.
 
 - the text embedding table is 622 mb, and a sentence only touches a few dozen of its rows. serve.py writes the table to its own `text_table-<model>.u16` file once and reads rows from that file on demand instead of keeping it in ram.
 - mlx-audio recomputes the speaker embedding from the reference clip for every sentence. serve.py computes it once and reuses it.
 - after the first sentence, the reference audio encoders aren't needed anymore (their output is cached), so serve.py drops them.
 - qwen3-tts sometimes cuts off the last word. adding ` ^.` to the end of the text fixes most of it, and the model doesn't read it out. on my test set it took cut-off endings from 7 out of 24 lines to 1.
+- at the default temperature of 0.9, every now and then a sentence ends an octave low, like a growl. serve.py samples at 0.7 instead. over 200 takes each, that took growls from 4 to 0 on a 4090 and from 2 to 0 on the mac, with the same speed. her pitch moves a little less (about 0.4 semitones of range).
 
 on a gpu, serve.py uses [faster-qwen3-tts](https://github.com/andimarafioti/faster-qwen3-tts) (cuda graphs), which turns the reference clip into a voice prompt once and reuses it, and streams in smaller chunks so the first audio comes out sooner. the audio there isn't byte-identical to plain faster-qwen3-tts, it's just the same voice.
 

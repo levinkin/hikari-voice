@@ -55,5 +55,5 @@ def speak(voice, text, seed):
     model, reference_audio, reference_text = voice
     if seed is not None:
         mx.random.seed(seed)
-    for result in model.generate(text=text, ref_audio=reference_audio, ref_text=reference_text, stream=True, streaming_interval=0.5):
+    for result in model.generate(text=text, ref_audio=reference_audio, ref_text=reference_text, stream=True, streaming_interval=0.5, temperature=0.7):
         yield np.array(result.audio)
