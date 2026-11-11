@@ -50,7 +50,7 @@ if not table_path.exists():
     np.array(text_weight.view(mx.uint16)).tofile(table_path)
 model.talker.model.text_embedding = DiskEmbedding(np.memmap(table_path, dtype=np.uint16, mode="r", shape=text_weight.shape))
 del text_weight
-list(model.generate(text="Hello there, Kevin.", ref_audio=reference_audio, ref_text=reference_text, stream=True, streaming_interval=0.5))
+list(model.generate(text="Hello there.", ref_audio=reference_audio, ref_text=reference_text, stream=True, streaming_interval=0.5))
 model.speech_tokenizer.encoder_model = types.SimpleNamespace()
 model.speaker_encoder = types.SimpleNamespace()
 gc.collect()
