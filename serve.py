@@ -37,11 +37,14 @@ threading.Thread(target=keep_warm, daemon=True).start()
 
 class SpeechRequest(BaseModel):
     input: str
+    seed: int | None = None
 
 
-def synthesize(text: str, chunks: queue.Queue, stop: threading.Event):
+def synthesize(text: str, seed: int | None, chunks: queue.Queue, stop: threading.Event):
     try:
         with lock:
+            if seed is not None:
+                mx.random.seed(seed)
             for result in model.generate(text=text, ref_audio=reference_audio, ref_text=reference_text, stream=True, streaming_interval=0.5):
                 if stop.is_set():
                     break
@@ -63,7 +66,7 @@ async def speech(request: SpeechRequest):
     chunks = queue.Queue()
     stop = threading.Event()
     text = re.sub(r"\bnya+\b", "Nyah", request.input, flags=re.IGNORECASE) + " ^."
-    threading.Thread(target=synthesize, args=(text, chunks, stop), daemon=True).start()
+    threading.Thread(target=synthesize, args=(text, request.seed, chunks, stop), daemon=True).start()
     return StreamingResponse(stream(chunks, stop), media_type="audio/pcm")
 
 
