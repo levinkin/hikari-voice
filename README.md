@@ -40,6 +40,17 @@ same 4 lines and seeds for each row, plain library vs serve.py:
 rtf is seconds spent per second of audio, so lower is faster. the mac 1.7b rows are the average of 3 runs each, taking turns with plain, while my other server was using the same gpu. the other rows are one run each. on the 4090 under linux the process also uses about 3 gb of normal ram either way (about 2.3 gb on windows). the smaller chunks cost about 5% speed on linux and about 20% on windows, but it still talks well over 2x faster than real time and starts about 70 ms sooner on linux and about 160 ms sooner on windows. the extra vram is pytorch holding on to memory it reserved, not memory the model uses. rows marked just rtx 4090 are linux. windows doesn't report vram per process, so its vram numbers are total gpu use minus what the desktop used before the start, give or take 300 mb. on windows, plain starts about 120 ms later and runs about 25% slower than on linux. this server starts only 20-35 ms later there, but runs about 50% slower.
 
 
+### how i got there
+
+i started by measuring where the memory actually went instead of looking at the model size. the text table was the biggest thing sitting in ram that a sentence barely touches: it has a row for each of qwen's 151,936 tokens across every language, and a sentence uses a few dozen. moving it to a file took about 600 mb out of ram without changing a single sample, since the numbers are the same. the speaker embedding and the encoders were the same story on a smaller scale, work the server kept repeating or kept around after it stopped needing it. dropping the encoders alone frees about 330 mb.
+
+a few things i tried didn't make it:
+
+- 4-bit weights are smaller and a bit faster, but the audio changes, and i wanted hikari to sound exactly the same.
+- compressing the weights with xz or zstd only shrank them 12-18% on disk and saved no ram at all.
+- splitting the table into per-language packs didn't help much. english alone needs about half the tokens, so the table only went from 622 to 315 mb.
+- pocket-tts, a smaller model, was 4x faster, but her pitch fell to 93 hz on one line (she normally sits around 280) and it can't speak japanese.
+
 ## running it
 
 get the code first:
