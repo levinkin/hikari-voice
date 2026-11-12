@@ -4,6 +4,8 @@ a small speech server that clones a voice from a 15 second clip with qwen3-tts. 
 
 i wrote it because the stock way of running qwen3-tts through mlx-audio used more memory and started speaking slower than i wanted on a mac mini that also runs everything else.
 
+to set it up, skip to [running it](#running-it).
+
 ## what it does differently
 
 on the mac, all of this keeps the audio byte-identical to plain mlx-audio with the same text, seed and temperature. i checked english, japanese and german lines before and after, on all three mac models below.
@@ -40,6 +42,15 @@ rtf is seconds spent per second of audio, so lower is faster. the mac 1.7b rows 
 
 ## running it
 
+get the code first:
+
+```
+git clone https://github.com/levinkin/hikari-voice
+cd hikari-voice
+```
+
+then follow the steps for your machine below. it comes set up with hikari's voice, so it talks right away. switch to your own voice later in `settings.toml`.
+
 ### apple silicon
 
 needs an apple silicon mac and python 3.12.
@@ -73,6 +84,10 @@ py -3.12 -m venv .venv
 
 on linux, pip pulls the cuda build of torch. for amd, install the rocm build of torch 2.15.0 from pytorch.org first, then run the pip line above. on windows, pip's default torch has no gpu support, which is why the windows steps install the cuda build first. i tested both on an nvidia rtx 4090: install took 81 s on linux and about 90 s on windows, and once the model is downloaded, startup takes about 7 s on linux and 11-12 s on windows. i haven't tried an amd card. the first start downloads `Qwen/Qwen3-TTS-12Hz-0.6B-Base`.
 
+### once it's running
+
+serve.py listens on `127.0.0.1:8001`, so only your own machine can reach it. it's ready when it prints `Uvicorn running on http://127.0.0.1:8001`. ctrl+c stops it.
+
 there's no cpu mode. without an apple silicon mac or a gpu, serve.py stops with `hikari-voice needs an apple silicon mac or an nvidia/amd gpu`. plain qwen-tts does run on cpu, but on a 32-thread desktop it took 13 s before any audio and 4.3 s per second of speech, too slow to talk with.
 
 ### settings.toml
@@ -82,23 +97,37 @@ serve.py reads `settings.toml` next to it:
 ```
 voice = "hikari_voice.wav"
 transcript = "It was a really quiet day here. ..."
+```
+
+you can add two optional lines:
+
+```
+temperature = 0.7
 model = "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"
 ```
 
 `voice` is the reference clip, a path relative to `settings.toml` or absolute. `transcript` is exactly what the clip says. `temperature` is optional and defaults to 0.7, see calibrating your voice below. `model` is optional and takes any qwen3-tts base checkpoint. without it, serve.py uses `mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit` on apple silicon and `Qwen/Qwen3-TTS-12Hz-0.6B-Base` on a gpu. i tested `mlx-community/Qwen3-TTS-12Hz-0.6B-Base-4bit` and `mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit` on the mac and `Qwen/Qwen3-TTS-12Hz-1.7B-Base` on the 4090, numbers are in the table above.
 
-then ask it to talk:
+then ask it to talk, from a second terminal:
 
 ```
 curl -s localhost:8001/v1/audio/speech -H 'content-type: application/json' \
   -d '{"input": "hi, this is my voice now."}' > out.pcm
 ```
 
-it returns raw 16-bit mono pcm at 24 khz. `seed` is optional and makes a line come out the same every time, on the mac and on the 4090. to play it:
+in windows powershell:
+
+```
+Invoke-WebRequest http://localhost:8001/v1/audio/speech -Method Post -ContentType application/json -Body '{"input": "hi, this is my voice now."}' -OutFile out.pcm
+```
+
+it returns raw 16-bit mono pcm at 24 khz. `seed` is optional and makes a line come out the same every time, on the mac and on the 4090. to play it (ffplay comes with ffmpeg):
 
 ```
 ffplay -f s16le -ar 24000 -ac 1 out.pcm
 ```
+
+restart serve.py after you change `settings.toml`.
 
 ## using your own voice
 
@@ -131,5 +160,8 @@ i designed her voice with elevenlabs voice design (from a written description, n
 - [qwen3-tts](https://github.com/QwenLM/Qwen3-TTS) (apache-2.0)
 - [mlx-audio](https://github.com/Blaizzy/mlx-audio) (mit)
 - [faster-qwen3-tts](https://github.com/andimarafioti/faster-qwen3-tts) (mit)
+- [librosa](https://github.com/librosa/librosa) (isc), for calibrate.py
+
+the qwen3-tts model weights are apache-2.0 too. this repo doesn't include them, serve.py downloads them from hugging face on first start.
 
 mit license, see `LICENSE`.
