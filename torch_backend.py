@@ -2,15 +2,15 @@ import torch
 from faster_qwen3_tts import FasterQwen3TTS
 
 
-def load(model_name, voice_path, reference_text):
+def load(model_name, voice_path, reference_text, temperature):
     voice = (FasterQwen3TTS.from_pretrained(model_name), str(voice_path), reference_text)
-    list(speak(voice, "Hello there.", None))
+    list(speak(voice, "Hello there.", None, temperature))
     return voice
 
 
-def speak(voice, text, seed):
+def speak(voice, text, seed, temperature):
     model, voice_path, reference_text = voice
     if seed is not None:
         torch.manual_seed(seed)
-    for audio, _, _ in model.generate_voice_clone_streaming(text, "Auto", ref_audio=voice_path, ref_text=reference_text, append_silence=False, chunk_size=8, temperature=0.7):
+    for audio, _, _ in model.generate_voice_clone_streaming(text, "Auto", ref_audio=voice_path, ref_text=reference_text, append_silence=False, chunk_size=8, temperature=temperature):
         yield audio

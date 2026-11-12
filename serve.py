@@ -24,7 +24,7 @@ else:
         sys.exit("hikari-voice needs an apple silicon mac or an nvidia/amd gpu")
     import torch_backend as backend
 model_name = settings.get("model", "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit" if apple else "Qwen/Qwen3-TTS-12Hz-0.6B-Base")
-voice = backend.load(model_name, here / settings["voice"], settings["transcript"])
+temperature = settings.get("temperature", 0.7)
 lock = threading.Lock()
 app = FastAPI()
 
@@ -33,12 +33,14 @@ def keep_warm():
     while not threading.Event().wait(120):
         if lock.acquire(blocking=False):
             try:
-                list(backend.speak(voice, "Hi.", None))
+                list(backend.speak(voice, "Hi.", None, temperature))
             finally:
                 lock.release()
 
 
-threading.Thread(target=keep_warm, daemon=True).start()
+def prepare(text):
+    text = re.sub(r"^\s*nya+\b[,~]?", "N'yah!", text, flags=re.IGNORECASE)
+    return re.sub(r"\bnya+\b", "N'yah", text, flags=re.IGNORECASE) + " ^."
 
 
 class SpeechRequest(BaseModel):
@@ -49,7 +51,7 @@ class SpeechRequest(BaseModel):
 def synthesize(text: str, seed: int | None, chunks: queue.Queue, stop: threading.Event):
     try:
         with lock:
-            for audio in backend.speak(voice, text, seed):
+            for audio in backend.speak(voice, text, seed, temperature):
                 if stop.is_set():
                     break
                 chunks.put((np.clip(audio, -1, 1) * 32767).astype("<i2").tobytes())
@@ -69,11 +71,11 @@ async def stream(chunks: queue.Queue, stop: threading.Event):
 async def speech(request: SpeechRequest):
     chunks = queue.Queue()
     stop = threading.Event()
-    text = re.sub(r"^\s*nya+\b[,~]?", "N'yah!", request.input, flags=re.IGNORECASE)
-    text = re.sub(r"\bnya+\b", "N'yah", text, flags=re.IGNORECASE) + " ^."
-    threading.Thread(target=synthesize, args=(text, request.seed, chunks, stop), daemon=True).start()
+    threading.Thread(target=synthesize, args=(prepare(request.input), request.seed, chunks, stop), daemon=True).start()
     return StreamingResponse(stream(chunks, stop), media_type="audio/pcm")
 
 
 if __name__ == "__main__":
+    voice = backend.load(model_name, here / settings["voice"], settings["transcript"], temperature)
+    threading.Thread(target=keep_warm, daemon=True).start()
     uvicorn.run(app, host="127.0.0.1", port=8001)

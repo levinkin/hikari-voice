@@ -29,7 +29,7 @@ def cached_speaker_embedding(self, audio, sr=24000):
     return self.speaker_cache[key]
 
 
-def load(model_name, voice_path, reference_text):
+def load(model_name, voice_path, reference_text, temperature):
     table_path = Path(__file__).parent / f"text_table-{quote(model_name, safe='')}.u16"
     mx.set_cache_limit(0)
     model = load_model(model_name)
@@ -43,7 +43,7 @@ def load(model_name, voice_path, reference_text):
     model.talker.model.text_embedding = DiskEmbedding(np.memmap(table_path, dtype=np.uint16, mode="r", shape=text_weight.shape))
     del text_weight
     voice = (model, reference_audio, reference_text)
-    list(speak(voice, "Hello there.", None))
+    list(speak(voice, "Hello there.", None, temperature))
     model.speech_tokenizer.encoder_model = types.SimpleNamespace()
     model.speaker_encoder = types.SimpleNamespace()
     gc.collect()
@@ -51,9 +51,9 @@ def load(model_name, voice_path, reference_text):
     return voice
 
 
-def speak(voice, text, seed):
+def speak(voice, text, seed, temperature):
     model, reference_audio, reference_text = voice
     if seed is not None:
         mx.random.seed(seed)
-    for result in model.generate(text=text, ref_audio=reference_audio, ref_text=reference_text, stream=True, streaming_interval=0.5, temperature=0.7):
+    for result in model.generate(text=text, ref_audio=reference_audio, ref_text=reference_text, stream=True, streaming_interval=0.5, temperature=temperature):
         yield np.array(result.audio)
