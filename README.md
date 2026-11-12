@@ -131,5 +131,8 @@ i designed her voice with elevenlabs voice design (from a written description, n
 - [qwen3-tts](https://github.com/QwenLM/Qwen3-TTS) (apache-2.0)
 - [mlx-audio](https://github.com/Blaizzy/mlx-audio) (mit)
 - [faster-qwen3-tts](https://github.com/andimarafioti/faster-qwen3-tts) (mit)
+- [librosa](https://github.com/librosa/librosa) (isc), for calibrate.py
+
+the qwen3-tts model weights are apache-2.0 too. this repo doesn't include them, serve.py downloads them from hugging face on first start.
 
 mit license, see `LICENSE`.
