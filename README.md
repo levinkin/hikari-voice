@@ -23,21 +23,21 @@ same 4 lines and seeds for each row, plain library vs serve.py:
 | machine | model | | first audio | speed (rtf) | memory | peak while talking |
 |---|---|---|---|---|---|---|
 | mac mini | 0.6b 8-bit | plain | 281 ms | 0.37 | 2223 mb | 4598 mb |
-| | | this | 271 ms | 0.37 | 1255 mb | 1594 mb |
+| | | this | 271 ms (-4%) | 0.37 (0%) | 1255 mb (-44%) | 1594 mb (-65%) |
 | mac mini | 0.6b 4-bit | plain | 285 ms | 0.31 | 1956 mb | 4325 mb |
-| | | this | 240 ms | 0.29 | 988 mb | 2034 mb |
+| | | this | 240 ms (-16%) | 0.29 (-6%) | 988 mb (-49%) | 2034 mb (-53%) |
 | mac mini | 1.7b 8-bit | plain | 371 ms | 0.49 | 3287 mb | 5701 mb |
-| | | this | 373 ms | 0.50 | 2316 mb | 3070 mb |
+| | | this | 373 ms (+1%) | 0.50 (+2%) | 2316 mb (-30%) | 3070 mb (-46%) |
 | rtx 4090 | 0.6b | plain | 255 ms | 0.25 | 3748 mb vram | 4142 mb vram |
-| | | this | 188 ms | 0.26 | 3920 mb vram | 4368 mb vram |
+| | | this | 188 ms (-26%) | 0.26 (+4%) | 3920 mb vram (+5%) | 4368 mb vram (+5%) |
 | rtx 4090 | 1.7b | plain | 279 ms | 0.28 | 5836 mb vram | 6154 mb vram |
-| | | this | 206 ms | 0.29 | 5792 mb vram | 6240 mb vram |
+| | | this | 206 ms (-26%) | 0.29 (+4%) | 5792 mb vram (-1%) | 6240 mb vram (+1%) |
 | rtx 4090, windows | 0.6b | plain | 381 ms | 0.32 | 3838 mb vram | 4156 mb vram |
-| | | this | 224 ms | 0.39 | 3944 mb vram | 4702 mb vram |
+| | | this | 224 ms (-41%) | 0.39 (+22%) | 3944 mb vram (+3%) | 4702 mb vram (+13%) |
 | rtx 4090, windows | 1.7b | plain | 396 ms | 0.35 | 5033 mb vram | 5493 mb vram |
-| | | this | 228 ms | 0.43 | 5931 mb vram | 6689 mb vram |
+| | | this | 228 ms (-42%) | 0.43 (+23%) | 5931 mb vram (+18%) | 6689 mb vram (+22%) |
 
-rtf is seconds spent per second of audio, so lower is faster. the mac 1.7b rows are the average of 3 runs each, taking turns with plain, while my other server was using the same gpu. the other rows are one run each. on the 4090 under linux the process also uses about 3 gb of normal ram either way (about 2.3 gb on windows). the smaller chunks cost about 5% speed on linux and about 20% on windows, but it still talks well over 2x faster than real time and starts about 70 ms sooner on linux and about 160 ms sooner on windows. the extra vram is pytorch holding on to memory it reserved, not memory the model uses. rows marked just rtx 4090 are linux. windows doesn't report vram per process, so its vram numbers are total gpu use minus what the desktop used before the start, give or take 300 mb. on windows, plain starts about 120 ms later and runs about 25% slower than on linux. this server starts only 20-35 ms later there, but runs about 50% slower.
+the percentages compare this server to plain, worked out from the numbers shown. lower is better in every column. rtf is seconds spent per second of audio, so lower is faster. the mac 1.7b rows are the average of 3 runs each, taking turns with plain, while my other server was using the same gpu. the other rows are one run each. on the 4090 under linux the process also uses about 3 gb of normal ram either way (about 2.3 gb on windows). the smaller chunks cost about 5% speed on linux and about 20% on windows, but it still talks well over 2x faster than real time and starts about 70 ms sooner on linux and about 160 ms sooner on windows. the extra vram is pytorch holding on to memory it reserved, not memory the model uses. rows marked just rtx 4090 are linux. windows doesn't report vram per process, so its vram numbers are total gpu use minus what the desktop used before the start, give or take 300 mb. on windows, plain starts about 120 ms later and runs about 25% slower than on linux. this server starts only 20-35 ms later there, but runs about 50% slower.
 
 
 ### how i got there
