@@ -1,5 +1,6 @@
 import sys
 import time
+import tomllib
 from pathlib import Path
 
 import numpy as np
@@ -7,8 +8,9 @@ import soundfile
 from mlx_audio.tts.utils import load_model
 
 here = Path(__file__).parent
-reference = str(here / "hikari_voice.wav")
-reference_text = (here / "hikari_voice.txt").read_text()
+settings = tomllib.loads((here / "settings.toml").read_text())
+reference = str(here / settings["voice"])
+reference_text = settings["transcript"]
 text = "Hey Kevin, I'm here. It's a little chilly out today, so maybe grab a jacket before you head out. Want me to set a reminder?"
 
 for model_name in sys.argv[1:]:
